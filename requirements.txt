@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+torch
+torchvision
+pytorch-grad-cam
+Pillow
+python-multipart
+reportlab
+numpy
