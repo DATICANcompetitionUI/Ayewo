@@ -53,6 +53,8 @@ curl -X POST "http://127.0.0.1:8000/predict/single" \
   -F "file=@/absolute/path/to/image.png"
 ```
 
+Replace `/absolute/path/to/image.png` with your actual local image path.
+
 ### 2) `POST /predict/batch`
 
 ```bash

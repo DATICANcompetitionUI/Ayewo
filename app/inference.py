@@ -14,6 +14,7 @@ from torchvision.models import MobileNet_V2_Weights, mobilenet_v2
 
 
 LABELS = ["Parasitized", "Uninfected"]
+LOW_CONFIDENCE_THRESHOLD = 75.0
 
 
 @dataclass
@@ -29,7 +30,7 @@ class MalariaInferenceService:
         self.device = torch.device("cpu")
         self.model_path = Path(model_path)
         self.model = self._build_model()
-        self._try_load_weights()
+        self.weights_loaded_from_file = self._try_load_weights()
         self.model.eval()
         self.transform = transforms.Compose(
             [
@@ -42,19 +43,25 @@ class MalariaInferenceService:
             ]
         )
         self.target_layers = [self.model.features[-1][0]]
-        self.model_loaded = True
+        self.model_loaded = self.weights_loaded_from_file or self.used_imagenet_pretrained
 
     def _build_model(self) -> nn.Module:
-        model = mobilenet_v2(weights=MobileNet_V2_Weights.IMAGENET1K_V1)
+        self.used_imagenet_pretrained = False
+        try:
+            model = mobilenet_v2(weights=MobileNet_V2_Weights.IMAGENET1K_V1)
+            self.used_imagenet_pretrained = True
+        except (RuntimeError, OSError, ValueError):
+            model = mobilenet_v2(weights=None)
         in_features = model.classifier[1].in_features
         model.classifier[1] = nn.Linear(in_features, 2)
         return model.to(self.device)
 
-    def _try_load_weights(self) -> None:
+    def _try_load_weights(self) -> bool:
         if not self.model_path.exists():
-            return
+            return False
         state_dict = torch.load(self.model_path, map_location=self.device)
         self.model.load_state_dict(state_dict)
+        return True
 
     def _make_gradcam(self, input_tensor: torch.Tensor, original_image: Image.Image) -> str:
         rgb_image = np.asarray(original_image.convert("RGB").resize((224, 224))).astype(np.float32) / 255.0
@@ -75,7 +82,7 @@ class MalariaInferenceService:
         gradcam_image = self._make_gradcam(transformed, image)
         return PredictionResult(
             result=LABELS[predicted_index],
-            confidence=round(confidence, 4),
+            confidence=round(confidence, 2),
             gradcam_image=gradcam_image,
-            low_confidence=confidence < 75.0,
+            low_confidence=confidence < LOW_CONFIDENCE_THRESHOLD,
         )

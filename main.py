@@ -1,5 +1,7 @@
 import io
 import uuid
+from collections import OrderedDict
+from threading import Lock
 from typing import Any
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -21,7 +23,11 @@ app.add_middleware(
 )
 
 inference_service = MalariaInferenceService()
-batch_store: dict[str, list[dict[str, Any]]] = {}
+# Keep only the latest reports in memory to prevent unbounded growth in this demo app.
+MAX_BATCH_REPORTS = 500
+MAX_BATCH_SIZE = 50
+batch_store: OrderedDict[str, list[dict[str, Any]]] = OrderedDict()
+batch_store_lock = Lock()
 
 
 async def read_image(upload: UploadFile) -> Image.Image:
@@ -57,8 +63,8 @@ async def predict_single(file: UploadFile = File(...)) -> dict[str, Any]:
 async def predict_batch(files: list[UploadFile] = File(...)) -> dict[str, Any]:
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded.")
-    if len(files) > 50:
-        raise HTTPException(status_code=400, detail="Maximum 50 files per batch.")
+    if len(files) > MAX_BATCH_SIZE:
+        raise HTTPException(status_code=400, detail=f"Maximum {MAX_BATCH_SIZE} files per batch.")
 
     batch_id = str(uuid.uuid4())
     response_rows = []
@@ -82,13 +88,17 @@ async def predict_batch(files: list[UploadFile] = File(...)) -> dict[str, Any]:
             }
         )
 
-    batch_store[batch_id] = report_rows
+    with batch_store_lock:
+        batch_store[batch_id] = report_rows
+        while len(batch_store) > MAX_BATCH_REPORTS:
+            batch_store.popitem(last=False)
     return {"batch_id": batch_id, "results": response_rows}
 
 
 @app.get("/report/{batch_id}")
 def get_report(batch_id: str) -> StreamingResponse:
-    rows = batch_store.get(batch_id)
+    with batch_store_lock:
+        rows = batch_store.get(batch_id)
     if rows is None:
         raise HTTPException(status_code=404, detail="Batch report not found.")
     pdf_content = build_batch_pdf(batch_id, rows)
