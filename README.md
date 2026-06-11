@@ -80,3 +80,40 @@ curl -L "http://127.0.0.1:8000/report/<batch_id>" -o batch_report.pdf
 - CORS is enabled for all origins for frontend integration.
 - Predictions below 75% confidence are flagged with `low_confidence: true`.
 - No authentication, user accounts, or database are used.
+
+## Frontend (React + Vite)
+
+The frontend application is located in `/home/runner/work/Ayewo/Ayewo/iayodeji/Ayewo/frontend`.
+
+### Frontend setup
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Set `VITE_API_BASE_URL` in `.env` if your backend runs on a different host/port.
+
+### Frontend pages
+
+1. Dashboard (`/`)
+2. Single Screening (`/single-screening`)
+3. Batch Screening (`/batch-screening`)
+
+### Frontend build
+
+```bash
+cd frontend
+npm run lint
+npm run build
+```
+
+### Deploy frontend on Vercel
+
+- Import the repository in Vercel.
+- Set the project root directory to `frontend`.
+- Build command: `npm run build`
+- Output directory: `dist`
+- Add environment variable `VITE_API_BASE_URL` to your deployed backend URL.

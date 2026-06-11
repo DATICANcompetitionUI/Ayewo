@@ -132,8 +132,8 @@ function BatchScreeningPage() {
                 </tr>
               </thead>
               <tbody>
-                {batchResult.results.map((row) => (
-                  <tr key={row.filename}>
+                {batchResult.results.map((row, index) => (
+                  <tr key={`${row.filename}-${index}`}>
                     <td className="border-b border-slate-200 px-3 py-2">{row.filename}</td>
                     <td className="border-b border-slate-200 px-3 py-2">{row.result}</td>
                     <td className="border-b border-slate-200 px-3 py-2">{row.confidence}%</td>
