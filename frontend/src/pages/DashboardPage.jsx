@@ -11,6 +11,7 @@ import DiagnosticsPanel from "../components/DiagnosticsPanel";
 import RegistryTable from "../components/RegistryTable";
 import ReportModal from "../components/ReportModal";
 import Toast from "../components/Toast";
+import TrendChart from "../components/TrendChart";
 
 const SAMPLES = {
   positive: {
@@ -62,6 +63,19 @@ export default function App() {
   // Mock database logs
   const [registry, setRegistry] = useState([
     {
+      id: "UI-2026-8841",
+      name: "Tunde Alao",
+      gender: "Male",
+      age: 23,
+      weight: "70 kg",
+      status: "MALARIA POSITIVE",
+      count: 2,
+      severity: "Moderate Density",
+      confidence: "93.4%",
+      date: "June 2",
+      guidelines: "ACT Protocol ongoing.",
+    },
+    {
       id: "UI-2026-1120",
       name: "Amina Bello",
       gender: "Female",
@@ -71,8 +85,8 @@ export default function App() {
       count: 0,
       severity: "No Parasites Spotted",
       confidence: "99.8%",
-      guidelines:
-        "No Plasmodium parasites detected. Investigate alternative causes of febrile illness.",
+      date: "June 10",
+      guidelines: "No Plasmodium parasites detected.",
     },
     {
       id: "UI-2026-0922",
@@ -84,12 +98,10 @@ export default function App() {
       count: 5,
       severity: "Severe Density",
       confidence: "98.1%",
-      guidelines:
-        "Admit patient immediately. Administer IV Artesunate followed by full oral ACT regime when stable.",
+      date: "June 1",
+      guidelines: "Admit patient immediately.",
     },
   ]);
-
-  
 
   // Axios FastAPI handler
   const handleFileUpload = async (e) => {
@@ -227,6 +239,13 @@ export default function App() {
               setAge={setAge}
               weight={weight}
               setWeight={setWeight}
+            />
+
+            <TrendChart
+              registry={registry}
+              activePatientId={patientId}
+              activePatientName={patientName}
+              currentScanResult={results}
             />
 
             <DiagnosticsPanel

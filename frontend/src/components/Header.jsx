@@ -49,13 +49,13 @@ export default function Header({ theme, toggleTheme }) {
             </NavLink>
           ))}
         </nav>
-        <button
+        {/* <button
           onClick={toggleTheme}
           className="p-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all text-sm"
           title="Toggle Theme"
         >
           {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
-        </button>
+        </button> */}
         <div class="text-right hidden sm:block text-xs">
           <p class="font-semibold text-slate-600 dark:text-slate-300">
             Active Lab node: UI-Hospital-01
