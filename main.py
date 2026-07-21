@@ -3,6 +3,7 @@ import uuid
 from collections import OrderedDict
 from contextlib import asynccontextmanager
 from functools import partial
+from pathlib import Path
 from threading import Lock
 from typing import Any
 
@@ -10,10 +11,17 @@ from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
 
-from .app.inference import MalariaInferenceService
-from .app.reporting import build_batch_pdf
+# Allow both `uvicorn main:app` from this repository and
+# `uvicorn Ayewo.main:app` from its workspace parent.
+try:
+    from .app.inference import MalariaInferenceService
+    from .app.reporting import build_batch_pdf
+except ImportError:
+    from app.inference import MalariaInferenceService
+    from app.reporting import build_batch_pdf
 
 # Keep only the latest reports in memory to prevent unbounded growth in this demo app.
 MAX_BATCH_REPORTS = 500
@@ -142,6 +150,12 @@ def create_app(inference_service: MalariaInferenceService | None = None) -> Fast
             media_type="application/pdf",
             headers={"Content-Disposition": f'attachment; filename="batch_report_{batch_id}.pdf"'},
         )
+
+    # Deployment serves the compiled React interface and prediction API from
+    # one public URL. The directory is absent while Vite runs locally.
+    frontend_dist = Path(__file__).parent / "frontend" / "dist"
+    if frontend_dist.is_dir():
+        app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
 
     return app
 
